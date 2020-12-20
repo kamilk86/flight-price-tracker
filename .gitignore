@@ -2,3 +2,5 @@ Pipfile
 Pipfile.lock
 prev_details.txt
 *.json
+api_key.py
+ApiWrapper.py

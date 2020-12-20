@@ -16,8 +16,8 @@ from kivy.uix.gridlayout import GridLayout
 import os
 import datetime
 import json
-#from ApiWrapper import SkyApi
-#from api_key import api_key
+from ApiWrapper import SkyApi
+from api_key import api_key
 from kivy.network.urlrequest import UrlRequest
 import urllib.parse
 
@@ -33,12 +33,12 @@ class LoginPage(Screen):
     def __init__(self, name, **kwargs):
         super().__init__()
         self.name = name
-        self.username = None
+        self.email = None
         self.password = None
         if os.path.isfile('prev_details.txt'):
             with open('prev_details.txt', 'r') as f:
                 d = f.read().split(',')
-                self.inp_username.text = d[0]
+                self.inp_email.text = d[0]
                 self.inp_password.text = d[1]
 
         self.busy_times = {'05:00', '05:01', '05:02', '05:03', '05:04', '05:05', '11:00', '11:01', '11:02', '11:03',
@@ -46,19 +46,37 @@ class LoginPage(Screen):
                            '23:02', '23:03', '23:04', '23:05'}
 
     def login(self):
-        self.username = self.inp_username.text
+        self.email = self.inp_email.text
         self.password = self.inp_password.text
 
         # TO-DO: save creds only if 'remember me' is ticked. add 'remember me' tickbox
         with open('prev_details.txt', 'w') as f:
-            f.write(f"{self.username},{self.password}")
+            f.write(f"{self.email},{self.password}")
 
-        trip_app.screen_manager.current = 'Manage'
+        url = "http://localhost:8000/api/user-auth/"
+        querystring = json.dumps({"username": self.email, "password": self.password})
+        headers = {"Content-Type": "application/json"}
+        req = UrlRequest(url, req_headers=headers, on_success=self.open_app, on_failure=self.show_login_error, on_error=self.show_login_error, method='Post', req_body=querystring)
+
+
+        
         #self.update_trips()
+    def open_app(self, req, result):
+        print("req: ", req)
+        print("result: ", result)
+        trip_app.token = result["token"]
+        print(trip_app.token)
+        trip_app.screen_manager.current = 'Manage'
+
+    def show_login_error(self, req, result):
+        print("req: ", req)
+        print("result: ", result)
 
     def clear(self):
-        self.username.text = ""
-        self.password.text = ""
+        self.email = None
+        self.password = None
+        self.inp_email.text = ""
+        self.inp_password.text = ""
 
     @staticmethod
     def locals_update():
@@ -395,6 +413,7 @@ class TripPage(Screen):
 class FlightPriceApp(App):
     def __init__(self):
         super().__init__()
+        self.token = None
         self.changeable_screens = {}
         self.screen_manager = ScreenManager()
 
