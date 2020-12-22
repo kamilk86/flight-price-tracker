@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import TripView, AccountView, LogoutView, RegisterView
+from .views import TripView, TripSearchView, AccountView, LogoutView, RegisterView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 
@@ -9,6 +9,7 @@ router.register('register', RegisterView, basename='register')
 router.register('logout', LogoutView, basename='logout')
 router.register('trips', TripView, basename='trips')
 router.register('account', AccountView, basename='account')
+router.register('search', TripSearchView, basename='search')
 
 
 urlpatterns = [

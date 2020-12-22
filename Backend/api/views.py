@@ -4,10 +4,14 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
+from .ApiWrapper import SkyApi
+from .api_key import api_key
 
 
 from .models import Trip, TripPrice, CustomUser # Account
 from .serializers import TripSerializer, TripPriceSerializer, UserSerializer
+
+sky_api = SkyApi(api_key)
 
 
 class RegisterView(viewsets.ViewSet):
@@ -101,3 +105,30 @@ class TripView(viewsets.ViewSet):
             return Response(status=status.HTTP_200_OK)
         except Trip.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class TripSearchView(viewsets.ViewSet):
+     def list(self, request):
+        #TO-DO: handle two requests for both ways
+        print(request.data)
+        resp = {}
+        if request.data['date_in']:
+            print("TWO WAY************")
+            date_in = request.data.pop('date_in')
+            print("Quering for Outbound")
+            print(request.data)
+            data = sky_api.browse_quotes(request.data)
+            resp['outbound'] = data
+            temp_origin = request.data['origin']
+            temp_dest = request.data['destination']
+            request.data['date_out'] = date_in
+            request.data['origin'] = temp_dest
+            request.data['destination'] = temp_origin
+            print("Quering for Inbound")
+            data = sky_api.browse_quotes(request.data)
+            resp['inbound'] = data
+        else:
+            data = sky_api.browse_quotes(request.data)
+            resp['outbound'] = data
+            
+        return Response(resp)

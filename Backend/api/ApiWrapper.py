@@ -1,5 +1,6 @@
-from kivy.network.urlrequest import UrlRequest
+#from kivy.network.urlrequest import UrlRequest
 import json
+import requests
 
 
 class SkyApi:
@@ -10,14 +11,14 @@ class SkyApi:
             'x-rapidapi-key': self.api_key
         }
 
-    def browse_quotes(self, **kwargs):
-        country = kwargs.get('country', None)
-        currency = kwargs.get('currency', None)
-        locale = kwargs.get('locale', None)
-        origin = kwargs.get('origin', None)
-        destination = kwargs.get('destination', None)
-        date_out = kwargs.get('date_out', None)
-        date_in = kwargs.pop('date_in', '')
+    def browse_quotes(self, query):
+        country = query.get('country', None)
+        currency = query.get('currency', None)
+        locale = query.get('locale', None)
+        origin = query.get('origin', None)
+        destination = query.get('destination', None)
+        date_out = query.get('date_out', None)
+        date_in = query.pop('date_in', '')
 
         url = f"https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/{country}/{currency}/{locale}/{origin}/{destination}/{date_out}"
         querystring = {"inboundpartialdate": date_in}

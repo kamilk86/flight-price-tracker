@@ -174,15 +174,33 @@ class NewTripPage(Screen):
         if self.out_day.text == "Day" or self.out_month.text == "Month" or self.out_year.text == "Year":
             print('Select Outbound Dates')
         else:
+            if self.in_year and self.in_month.text and self.in_day.text:
+                self.date_in_str = self.in_year.text + '-' + self.in_month.text + '-' + self.in_day.text
+            else:
+                self.date_in_str = ""
+
             self.date_str = self.out_year.text + '-' + self.out_month.text + '-' + self.out_day.text
+            
+
             country = 'UK'
             currency = 'GBP'
             locale = 'en-UK'
             date_in = ''
-            headers = {
-                'x-rapidapi-host': "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
-                'x-rapidapi-key': api_key
-            }
+            params =  {"country": country,
+                        "currency": currency,
+                        "locale": locale,
+                        "origin": self.places[self.origin_city.text],
+                        "destination": self.places[self.dest_city.text],
+                        "date_out": self.date_str,
+                        "date_in": self.date_in_str
+                        }  
+
+            url = "http://localhost:8000/api/search/"
+            headers = {"Content-Type": "application/json", "Authorization": "Token " + trip_app.token}
+            req = UrlRequest(url, on_success=self.display_quotes, method='Get', req_headers=headers, req_body=json.dumps(params))
+
+            """
+            
             url = f"https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/{country}/{currency}/{locale}/{self.places[self.origin_city.text]}/{self.places[self.dest_city.text]}/{self.date_str}"
             querystring = urllib.parse.urlencode({"inboundpartialdate": date_in})
             req = UrlRequest(url, on_success=self.send_result_out, method='Get', req_headers=headers, req_body=querystring)
@@ -192,25 +210,31 @@ class NewTripPage(Screen):
                 url = f"https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/browsequotes/v1.0/{country}/{currency}/{locale}/{self.places[self.dest_city.text]}/{self.places[self.origin_city.text]}/{self.date_str}"
                 req = UrlRequest(url, on_success=self.send_result_in, method='Get', req_headers=headers,
                                  req_body=querystring)
+            """
 
-    def send_result_out(self, req, result):
+    def display_quotes(self, req, result):
+        self.quotes_out(result['outbound'])
+        if "inbound" in result:
+            self.quotes_in(result['inbound'])
+
+    def quotes_out(self, result):
 
         try:
             trip_app.remove_screen('Out')
         except:
             pass
-        trips_out = TripsSearchResults(name='Out', result=result, date_str=self.date_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
+        trips_out = TripsSearchResults(name='Out', data=result, date_str=self.date_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
         trip_app.add_screen(trips_out)
         trips_out.display_trips()
         trip_app.screen_manager.current = 'Out'
 
-    def send_result_in(self, req, result):
+    def quotes_in(self, result):
 
         try:
             trip_app.remove_screen('In')
         except:
             pass
-        trips_in = TripsSearchResults(name='In', result=result, date_str=self.date_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
+        trips_in = TripsSearchResults(name='In', data=result, date_str=self.date_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
         trips_in.display_trips()
         trip_app.add_screen(trips_in)
 
@@ -232,7 +256,7 @@ class TripsSearchResults(Screen):
         self.origin = kwargs.get('origin', None)
         self.dest = kwargs.get('dest', None)
         self.one_way = kwargs.get('one_way', None)
-        self.result = kwargs.get('result', None)
+        self.data = kwargs.get('data', None)
 
     def display_trips(self):
 
@@ -242,9 +266,9 @@ class TripsSearchResults(Screen):
             self.header.text = f"  Outbound\n{self.origin} to {self.dest}\nDate: {self.date_str}"
         else:
             self.header.text = f"  Inbound\n{self.dest} to {self.origin}\nDate: {self.date_str}"
-
-        for i, quote in enumerate(self.result['Quotes']):
-            airline = next(x['Name'] for x in self.result['Carriers'] if x['CarrierId'] == quote['OutboundLeg']['CarrierIds'][0])
+        print("DATA: ", self.data)
+        for i, quote in enumerate(self.data['Quotes']):
+            airline = next(x['Name'] for x in self.data['Carriers'] if x['CarrierId'] == quote['OutboundLeg']['CarrierIds'][0])
             details = f"{i+1}  Quote ID: {quote['QuoteId']} Airline: {airline}\nPrice: {quote['MinPrice']} Direct: {quote['Direct']}"
             lbl = Label(text=details, size_hint_y=None, height=40, size_hint_x=.8)
             layout.add_widget(lbl)
