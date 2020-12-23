@@ -33,50 +33,198 @@ class LoginPage(Screen):
     def __init__(self, name, **kwargs):
         super().__init__()
         self.name = name
+        self.user_id = None
         self.email = None
         self.password = None
+        self.token = None
+        self.register_attempt = True
+        self.delete_attempt = True
+        self.initial_login = False
+        self.is_clear_cancel = False
+
+        
         if os.path.isfile('prev_details.txt'):
             with open('prev_details.txt', 'r') as f:
                 d = f.read().split(',')
                 self.inp_email.text = d[0]
                 self.inp_password.text = d[1]
+                self.user_id = d[2]
+                self.token = d[3]
+        
+       
+        #self.busy_times = {'05:00', '05:01', '05:02', '05:03', '05:04', '05:05', '11:00', '11:01', '11:02', '11:03',
+         #                  '11:04', '11:05', '17:00', '17:01', '17:02', '17:03', '17:04', '17:05', '23:00', '23:01',
+        
+        
+      #                 '23:02', '23:03', '23:04', '23:05'}
 
-        self.busy_times = {'05:00', '05:01', '05:02', '05:03', '05:04', '05:05', '11:00', '11:01', '11:02', '11:03',
-                           '11:04', '11:05', '17:00', '17:01', '17:02', '17:03', '17:04', '17:05', '23:00', '23:01',
-                           '23:02', '23:03', '23:04', '23:05'}
+    def save_credentials(self):
+        with open('prev_details.txt', 'w') as f:
+            f.write(f"{self.email},{self.password},{self.user_id},{self.token}")
 
     def login(self):
+        if not self.inp_email.text or not self.inp_password.text:
+            self.action_msg.color = "red"
+            self.action_msg.text = "Enter email and password"
+            return
         self.email = self.inp_email.text
         self.password = self.inp_password.text
 
-        # TO-DO: save creds only if 'remember me' is ticked. add 'remember me' tickbox
-        with open('prev_details.txt', 'w') as f:
-            f.write(f"{self.email},{self.password}")
+        if not self.initial_login:
+            self.delete_btn.disabled = True
+            self.register_btn.disabled = True
+            self.login_btn.disabled = True
+            self.clear_btn.disabled = True
+       
 
         url = "http://localhost:8000/api/user-auth/"
         querystring = json.dumps({"username": self.email, "password": self.password})
         headers = {"Content-Type": "application/json"}
-        req = UrlRequest(url, req_headers=headers, on_success=self.open_app, on_failure=self.show_login_error, on_error=self.show_login_error, method='Post', req_body=querystring)
-
-
         
-        #self.update_trips()
+        req = UrlRequest(url, req_headers=headers, on_success=self.open_app, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=querystring)
+        
+    def register(self):
+        if not self.inp_email.text or not self.inp_password.text:
+            self.action_msg.color = "red"
+            self.action_msg.text = "Enter email and password"
+            return
+        if self.register_attempt:
+            self.register_btn.text = "Confirm Register"
+            self.register_btn.color = "red"
+            self.register_attempt = False
+            self.switch_clear_button_state()
+            self.login_btn.disabled = True
+            self.delete_btn.disabled = True
+            return
+
+        self.register_btn.text = "Register"
+        self.register_btn.color = "white"
+        self.register_btn.disabled = True
+        self.register_attempt = True
+        
+        self.email = self.inp_email.text
+        self.password = self.inp_password.text
+        
+        url = "http://localhost:8000/api/register/"
+        querystring = json.dumps({"email": self.email, "password": self.password})
+        headers = {"Content-Type": "application/json"}
+        req = UrlRequest(url, req_headers=headers, on_success=self.show_action_msg, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=querystring)
+        self.switch_clear_button_state()
+        
+        return
+
+    def delete_account(self):
+        if not self.token:
+            self.action_msg.color = "red"
+            self.action_msg.text = "Create account or activate existing account by loging in for the first time"
+            return
+        if self.delete_attempt:
+            self.delete_btn.color = "red"
+            self.delete_btn.text = "Confirm Deletion!"
+            self.delete_attempt = False
+            self.switch_clear_button_state()
+            self.login_btn.disabled = True
+            self.register_btn.disabled = True
+            return
+
+        self.delete_btn.color = "white"
+        self.delete_btn.text = "Delete Account"
+        self.delete_btn.disabled = True
+        self.delete_attempt = True
+
+        url = "http://localhost:8000/api/account/" + str(self.user_id) + '/'
+        
+        headers = {"Content-Type": "application/json", "Authorization": "Token " + self.token}
+        req = UrlRequest(url, req_headers=headers, on_success=self.show_action_msg, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Delete')
+        self.switch_clear_button_state()
+       
+        return
+
+    def show_action_msg(self, req, result):
+        if req.resp_status != 200 and req.resp_status != 201:
+            
+            self.action_msg.color = "red"
+            if not self.initial_login:
+                self.delete_btn.disabled = False
+                self.register_btn.disabled = False
+                self.login_btn.disabled = False
+                self.clear_btn.disabled = False
+            
+            if req.resp_status == 400:
+                if 'non_field_errors' in result and result['non_field_errors'][0].startswith('Unable to log'):
+                    self.action_msg.text = "Wrong Username or Password"
+                    return
+                if 'email' in result:
+                    self.action_msg.text = result['email'][0]
+                    return
+            self.action_msg.text = str(result)
+        else:
+            self.action_msg.color = "green"
+
+            if 'deleted_id' in result:
+                self.action_msg.text = "Account Deleted!"
+                self.login_btn.disabled = False
+                self.register_btn.disabled = False
+                self.delete_btn.disabled = False
+                if os.path.exists("prev_details.txt"):
+                    os.remove("prev_details.txt")
+                self.clear()
+
+            if 'id' in result:
+                self.action_msg.text = "Account Created. Please log in"
+                self.clear()
+                self.login_btn.disabled = False
+                self.delete_btn.disabled = False
+                self.delete_btn.disabled = True
+                #self.register_btn.disabled = True
+                self.initial_login = True
+            
+        #   if deleted
+        print("REQ: ", req.resp_status)
+        print("RESULT: ", result)
+        print("RESULT TYPE: ", type(result))
+        #self.action_msg.text = str(result)
+    
+       # self.action_msg.text = result
+
+    def switch_clear_button_state(self):
+        if self.is_clear_cancel:
+            self.clear_btn.text = "Clear"
+            self.clear_btn.color = "white"
+            self.is_clear_cancel = False
+        else:
+            self.clear_btn.text = "Cancel"
+            self.clear_btn.color = "red"
+            self.is_clear_cancel = True
+        
     def open_app(self, req, result):
-        print("req: ", req)
-        print("result: ", result)
-        trip_app.token = result["token"]
-        print(trip_app.token)
+        self.user_id = result['id']
+        self.token = result["token"]
+        # if remember me is ticked, save creds
+        self.save_credentials()
+        self.initial_login = False
         trip_app.screen_manager.current = 'Manage'
 
-    def show_login_error(self, req, result):
-        print("req: ", req)
-        print("result: ", result)
 
     def clear(self):
+        if self.is_clear_cancel:
+            self.register_attempt = True
+            self.delete_attempt = True
+            self.delete_btn.text = "Delete Account"
+            self.delete_btn.color = "white"
+            self.delete_btn.disabled = False
+            self.register_btn.text = "Register"
+            self.register_btn.color = "white"
+            self.register_btn.disabled = False
+            self.login_btn.disabled = False
+            self.switch_clear_button_state()
+            return
+
         self.email = None
         self.password = None
         self.inp_email.text = ""
         self.inp_password.text = ""
+        return
 
     @staticmethod
     def locals_update():
@@ -196,7 +344,7 @@ class NewTripPage(Screen):
                         }  
 
             url = "http://localhost:8000/api/search/"
-            headers = {"Content-Type": "application/json", "Authorization": "Token " + trip_app.token}
+            headers = {"Content-Type": "application/json", "Authorization": "Token " + trip_app.login_page.token}
             req = UrlRequest(url, on_success=self.display_quotes, method='Get', req_headers=headers, req_body=json.dumps(params))
 
             """
@@ -437,7 +585,7 @@ class TripPage(Screen):
 class FlightPriceApp(App):
     def __init__(self):
         super().__init__()
-        self.token = None
+       
         self.changeable_screens = {}
         self.screen_manager = ScreenManager()
 

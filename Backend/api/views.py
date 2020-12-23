@@ -6,6 +6,8 @@ from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from .ApiWrapper import SkyApi
 from .api_key import api_key
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 
 
 from .models import Trip, TripPrice, CustomUser # Account
@@ -26,6 +28,13 @@ class RegisterView(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         #return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomObtainAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super(CustomObtainAuthToken, self).post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        return Response({'token': token.key, 'id': token.user_id})
         
 
 class LogoutView(viewsets.ViewSet):
@@ -57,7 +66,7 @@ class AccountView(viewsets.ViewSet):
     def destroy(self, request, pk=None):
         try:
             CustomUser.objects.get(pk=pk).delete() # request.user.id
-            return Response(status=status.HTTP_200_OK)
+            return Response({'deleted_id': pk}, status=status.HTTP_200_OK)
         except CustomUser.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 

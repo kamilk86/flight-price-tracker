@@ -7,35 +7,61 @@
 <LoginPage>:
     inp_email: inp_email
     inp_password: inp_password
+    delete_btn: delete_btn
+    login_btn: login_btn
+    register_btn: register_btn
+    clear_btn: clear_btn
+    action_msg: action_msg
     FloatLayout:
         Label:
-            text: "Username"
-            size_hint: .5, .25
+            text: "Email"
+            size_hint: .3, .1
             pos_hint: {"top": 1}
         TextInput:
             id: inp_email
-            size_hint: .5, .25
-            pos_hint: {"x": .5, "top": 1}
+            size_hint: .7, .1
+            pos_hint: {"x": .3, "top": 1}
         Label:
             text: "Password"
-            size_hint: .5, .25
-            pos_hint: {"top": .75}
+            size_hint: .3, .1
+            pos_hint: {"top": .9}
         TextInput:
             id: inp_password
-            size_hint: .5, .25
-            pos_hint: {"x": .5, "top": .75}
+            size_hint: .7, .1
+            pos_hint: {"x": .3, "top": .9}
+        Label:
+            id: action_msg
+            text: "TEST TEST TEST"
+            text_size: root.width, None
+            valign: "middle"
+            halign: "center"
+            color: "green"
+            size_hint: 1, 0.2
+            pos_hint: {"top": .8}
         Button:
-            id: login
+            id: login_btn
             text: "Login"
-            size_hint: 1, .25
-            pos_hint: {"top": .5}
+            size_hint: 1, .2
+            pos_hint: {"top": .6}
             on_press: root.login()
         Button:
-            id: clear
+            id: register_btn
+            text: "Register"
+            size_hint: 1, .2
+            pos_hint: {"top": .4}
+            on_press: root.register()
+        Button:
+            id: clear_btn
             text: "Clear"
-            size_hint: 1, .25
-            pos_hint: {"top": .25}
+            size_hint: .5, .2
+            pos_hint: {"top": .2}
             on_press: root.clear()
+        Button:
+            id: delete_btn
+            text: "Delete Account"
+            size_hint: .5, .2
+            pos_hint: {"x": .5, "top": .2}
+            on_press: root.delete_account()
 
 
 <ManageTripsPage>:
