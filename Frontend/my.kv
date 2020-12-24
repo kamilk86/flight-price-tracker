@@ -13,22 +13,17 @@
     clear_btn: clear_btn
     action_msg: action_msg
     FloatLayout:
-        Label:
-            text: "Email"
-            size_hint: .3, .1
-            pos_hint: {"top": 1}
         TextInput:
             id: inp_email
-            size_hint: .7, .1
-            pos_hint: {"x": .3, "top": 1}
-        Label:
-            text: "Password"
-            size_hint: .3, .1
-            pos_hint: {"top": .9}
+            hint_text: "Email"
+            size_hint: .9, .1
+            pos_hint: {"right": .95, "top": .98}
         TextInput:
             id: inp_password
-            size_hint: .7, .1
-            pos_hint: {"x": .3, "top": .9}
+            hint_text: "Password"
+            password: "True"
+            size_hint: .9, .1
+            pos_hint: {"right": .95, "top": .87}
         Label:
             id: action_msg
             text: "TEST TEST TEST"
