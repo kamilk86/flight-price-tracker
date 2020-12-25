@@ -1,5 +1,6 @@
 <Button>:
     font_size: 12
+    color: "white"
 <Spinner>:
     font_size: 10
 <SpinnerOption>
@@ -31,31 +32,31 @@
             valign: "middle"
             halign: "center"
             color: "green"
-            size_hint: 1, 0.2
-            pos_hint: {"top": .8}
+            size_hint: .8, 0.25
+            pos_hint: {"x": .1 ,"top": .76}
         Button:
             id: login_btn
             text: "Login"
-            size_hint: 1, .2
-            pos_hint: {"top": .6}
+            size_hint: 1, .15
+            pos_hint: {"top": .5}
             on_press: root.login()
         Button:
             id: register_btn
             text: "Register"
-            size_hint: 1, .2
-            pos_hint: {"top": .4}
+            size_hint: 1, .15
+            pos_hint: {"top": .34}
             on_press: root.register()
         Button:
             id: clear_btn
             text: "Clear"
-            size_hint: .5, .2
-            pos_hint: {"top": .2}
+            size_hint: .5, .15
+            pos_hint: {"top": .18}
             on_press: root.clear()
         Button:
             id: delete_btn
             text: "Delete Account"
-            size_hint: .5, .2
-            pos_hint: {"x": .5, "top": .2}
+            size_hint: .5, .15
+            pos_hint: {"x": .5, "top": .18}
             on_press: root.delete_account()
 
 

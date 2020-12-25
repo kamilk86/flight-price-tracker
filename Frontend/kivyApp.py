@@ -39,7 +39,7 @@ class LoginPage(Screen):
         self.token = None
         self.register_attempt = True
         self.delete_attempt = True
-        self.initial_login = False
+        #self.initial_login = False
         self.is_clear_cancel = False
 
         
@@ -70,13 +70,8 @@ class LoginPage(Screen):
         self.email = self.inp_email.text
         self.password = self.inp_password.text
 
-        if not self.initial_login:
-            self.delete_btn.disabled = True
-            self.register_btn.disabled = True
-            self.login_btn.disabled = True
-            self.clear_btn.disabled = True
-       
-
+        self.switch_buttons_state({'l': True, 'd': True, 'r': True, 'c': True})
+            
         url = "http://localhost:8000/api/user-auth/"
         querystring = json.dumps({"username": self.email, "password": self.password})
         headers = {"Content-Type": "application/json"}
@@ -88,18 +83,22 @@ class LoginPage(Screen):
             self.action_msg.color = "red"
             self.action_msg.text = "Enter email and password"
             return
+
         if self.register_attempt:
             self.register_btn.text = "Confirm Register"
             self.register_btn.color = "red"
+            self.register_btn.background_color = (255,255,255)
             self.register_attempt = False
             self.switch_clear_button_state()
-            self.login_btn.disabled = True
-            self.delete_btn.disabled = True
+            self.switch_buttons_state({'l': True, 'd': True})
+           
             return
 
         self.register_btn.text = "Register"
         self.register_btn.color = "white"
-        self.register_btn.disabled = True
+        self.register_btn.background_color = (1,1,1)
+        self.switch_buttons_state({'d': True, 'r': True, 'c': True, 'l': True})
+       
         self.register_attempt = True
         
         self.email = self.inp_email.text
@@ -121,15 +120,17 @@ class LoginPage(Screen):
         if self.delete_attempt:
             self.delete_btn.color = "red"
             self.delete_btn.text = "Confirm Deletion!"
+            self.delete_btn.background_color = (255,255,255)
             self.delete_attempt = False
             self.switch_clear_button_state()
-            self.login_btn.disabled = True
-            self.register_btn.disabled = True
+            self.switch_buttons_state({'l': True, 'r': True})
+           
             return
 
         self.delete_btn.color = "white"
         self.delete_btn.text = "Delete Account"
-        self.delete_btn.disabled = True
+        self.delete_btn.background_color = (1,1,1)
+        self.switch_buttons_state({'d': True, 'r': True, 'c': True, 'l': True})
         self.delete_attempt = True
 
         url = "http://localhost:8000/api/account/" + str(self.user_id) + '/'
@@ -144,11 +145,8 @@ class LoginPage(Screen):
         if req.resp_status != 200 and req.resp_status != 201:
             
             self.action_msg.color = "red"
-            if not self.initial_login:
-                self.delete_btn.disabled = False
-                self.register_btn.disabled = False
-                self.login_btn.disabled = False
-                self.clear_btn.disabled = False
+            
+            self.switch_buttons_state({'l': False, 'd': False, 'r': False, 'c': False})
             
             if req.resp_status == 400:
                 if 'non_field_errors' in result and result['non_field_errors'][0].startswith('Unable to log'):
@@ -163,9 +161,11 @@ class LoginPage(Screen):
 
             if 'deleted_id' in result:
                 self.action_msg.text = "Account Deleted!"
-                self.login_btn.disabled = False
-                self.register_btn.disabled = False
-                self.delete_btn.disabled = False
+                self.switch_buttons_state({'l': False, 'd': False, 'r': False, 'c': False})
+               
+                self.email = None
+                self.password = None
+                self.token = None
                 if os.path.exists("prev_details.txt"):
                     os.remove("prev_details.txt")
                 self.clear()
@@ -173,30 +173,42 @@ class LoginPage(Screen):
             if 'id' in result:
                 self.action_msg.text = "Account Created. Please log in"
                 self.clear()
-                self.login_btn.disabled = False
-                self.delete_btn.disabled = False
-                self.delete_btn.disabled = True
-                #self.register_btn.disabled = True
-                self.initial_login = True
+                self.switch_buttons_state({'l': False, 'd': False, 'r': False, 'c': False})
+               
             
-        #   if deleted
         print("REQ: ", req.resp_status)
         print("RESULT: ", result)
         print("RESULT TYPE: ", type(result))
-        #self.action_msg.text = str(result)
-    
-       # self.action_msg.text = result
+       
 
     def switch_clear_button_state(self):
         if self.is_clear_cancel:
             self.clear_btn.text = "Clear"
             self.clear_btn.color = "white"
+            self.clear_btn.background_color = (1,1,1)
             self.is_clear_cancel = False
         else:
             self.clear_btn.text = "Cancel"
             self.clear_btn.color = "red"
+            self.clear_btn.background_color = (255,255,255)
             self.is_clear_cancel = True
-        
+
+    def switch_buttons_state(self, kwargs):
+        login_state = kwargs.get('l', None)
+        register_state = kwargs.get('r', None)
+        delete_state = kwargs.get('d', None)
+        clear_state = kwargs.get('c', None)
+        if login_state is not None:
+            self.login_btn.disabled = login_state
+        if register_state is not None:
+            self.register_btn.disabled = register_state
+        if delete_state is not None:
+            self.delete_btn.disabled = delete_state
+        if clear_state is not None:
+            self.clear_btn.disabled = clear_state
+        return
+
+
     def open_app(self, req, result):
         self.user_id = result['id']
         self.token = result["token"]
@@ -212,11 +224,14 @@ class LoginPage(Screen):
             self.delete_attempt = True
             self.delete_btn.text = "Delete Account"
             self.delete_btn.color = "white"
-            self.delete_btn.disabled = False
+            self.delete_btn.background_color = (1,1,1)
+            #self.delete_btn.disabled = False
             self.register_btn.text = "Register"
             self.register_btn.color = "white"
-            self.register_btn.disabled = False
-            self.login_btn.disabled = False
+            self.register_btn.background_color = (1,1,1)
+            #self.register_btn.disabled = False
+            #self.login_btn.disabled = False
+            self.switch_buttons_state({'l': False, 'd': False, 'r': False})
             self.switch_clear_button_state()
             return
 
