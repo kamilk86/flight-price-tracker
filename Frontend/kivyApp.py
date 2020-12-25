@@ -162,13 +162,7 @@ class LoginPage(Screen):
             if 'deleted_id' in result:
                 self.action_msg.text = "Account Deleted!"
                 self.switch_buttons_state({'l': False, 'd': False, 'r': False, 'c': False})
-               
-                self.email = None
-                self.password = None
-                self.token = None
-                if os.path.exists("prev_details.txt"):
-                    os.remove("prev_details.txt")
-                self.clear()
+                self.delete_account_details()
 
             if 'id' in result:
                 self.action_msg.text = "Account Created. Please log in"
@@ -208,6 +202,13 @@ class LoginPage(Screen):
             self.clear_btn.disabled = clear_state
         return
 
+    def delete_account_details(self):
+        self.email = None
+        self.password = None
+        self.token = None
+        if os.path.exists("prev_details.txt"):
+            os.remove("prev_details.txt")
+        self.clear()
 
     def open_app(self, req, result):
         self.user_id = result['id']
@@ -225,12 +226,10 @@ class LoginPage(Screen):
             self.delete_btn.text = "Delete Account"
             self.delete_btn.color = "white"
             self.delete_btn.background_color = (1,1,1)
-            #self.delete_btn.disabled = False
             self.register_btn.text = "Register"
             self.register_btn.color = "white"
             self.register_btn.background_color = (1,1,1)
-            #self.register_btn.disabled = False
-            #self.login_btn.disabled = False
+    
             self.switch_buttons_state({'l': False, 'd': False, 'r': False})
             self.switch_clear_button_state()
             return
@@ -239,6 +238,7 @@ class LoginPage(Screen):
         self.password = None
         self.inp_email.text = ""
         self.inp_password.text = ""
+        
         return
 
     @staticmethod
@@ -317,6 +317,11 @@ class ManageTripsPage(Screen):
                               'back': [trip_data['back_price']]}
             }
 
+    def logout(self):
+        trip_app.login_page.delete_account_details()
+        trip_app.screen_manager.transition.direction = 'right'
+        trip_app.screen_manager.current = "Login"
+        trip_app.login_page.switch_buttons_state({'l': False, 'd': False, 'r': False, 'c': False})
 
 class NewTripPage(Screen):
     def __init__(self, name,  **kwargs):

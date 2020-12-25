@@ -69,19 +69,26 @@
             halign: "center"
             valign: "top"
             font_size: 18
-            size_hint: (1, .4)
+            size_hint: (1, .1)
             pos_hint: {"top":1}
         Button:
             id: new_trip
             text: "New Trip"
             size_hint: (1, .3)
-            pos_hint: {"top": .6}
+            pos_hint: {"top": .9}
             on_press: root.new_trip()
         Button:
             id: view_trips
             text: "View Trips"
             size_hint: (1, .3)
+            pos_hint: {"top": .6}
             on_press: root.view_trips()
+        Button:
+            id: logout_btn
+            text: "Logout"
+            size_hint: (1, .3)
+            pos_hint: {"top": .3}
+            on_press: root.logout()
 
 <NewTripPage>:
     out_day: out_day
