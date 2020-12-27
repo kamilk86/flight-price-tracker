@@ -74,10 +74,10 @@ class LoginPage(Screen):
         self.switch_buttons_state({'l': True, 'r': True, 'c': True})
             
         url = "http://localhost:8000/api/user-auth/"
-        querystring = json.dumps({"username": self.email, "password": self.password})
+        params = json.dumps({"username": self.email, "password": self.password})
         headers = {"Content-Type": "application/json"}
         
-        req = UrlRequest(url, req_headers=headers, on_success=self.open_app, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=querystring)
+        req = UrlRequest(url, req_headers=headers, on_success=self.open_app, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=params)
         
     def register(self):
         if not self.inp_email.text or not self.inp_password.text:
@@ -106,9 +106,9 @@ class LoginPage(Screen):
         self.password = self.inp_password.text
         
         url = "http://localhost:8000/api/register/"
-        querystring = json.dumps({"email": self.email, "password": self.password})
+        params = json.dumps({"email": self.email, "password": self.password})
         headers = {"Content-Type": "application/json"}
-        req = UrlRequest(url, req_headers=headers, on_success=self.show_action_msg, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=querystring)
+        req = UrlRequest(url, req_headers=headers, on_success=self.show_action_msg, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Post', req_body=params)
         self.switch_clear_button_state()
         
         return
@@ -173,6 +173,10 @@ class LoginPage(Screen):
         # if remember me is ticked, save creds
         self.save_credentials()
         self.switch_buttons_state({'l': False, 'r': False, 'c': False})
+        trip_app.manage_account_page.updated_email.text = self.email
+        trip_app.manage_account_page.updated_password.text = self.password
+        trip_app.manage_account_page.action_msg.text = "Modify account details to update"
+        trip_app.screen_manager.transition.direction = 'left'
         trip_app.screen_manager.current = 'Main'
 
 
@@ -246,15 +250,46 @@ class ManageAccountPage(Screen):
         self.update_attempt = True
         self.delete_attempt = True
 
+    def update_account(self):
+        if self.update_attempt:
+            self.update_btn.color = "red"
+            self.update_btn.text = "Confirm Update!"
+            self.update_btn.background_color = (255,255,255)
+            self.update_attempt = False
+            self.switch_clear_button_state()
+            self.switch_buttons_state({'d': True})
+           
+            return
+
+        self.update_btn.color = "white"
+        self.update_btn.text = "Update Account"
+        self.update_btn.background_color = (1,1,1)
+        self.switch_buttons_state({'d': True, 'c': True, 'u': True, 'h': True})
+        self.update_attempt = True
+
+        url = "http://localhost:8000/api/account/" + str(trip_app.login_page.user_id) + '/'
+        
+        params = json.dumps({'email': self.updated_email.text, 'password': self.updated_password.text})
+        headers = {"Content-Type": "application/json", "Authorization": "Token " + trip_app.login_page.token}
+        req = UrlRequest(url, req_headers=headers, on_success=self.show_action_msg, on_failure=self.show_action_msg, on_error=self.show_action_msg, method='Put', req_body=params)
+        self.switch_clear_button_state()
+       
+        return
+
     def clear(self):
         if self.is_clear_cancel:
             self.update_attempt = True
             self.delete_attempt = True
+
             self.delete_btn.text = "Delete Account"
             self.delete_btn.color = "white"
             self.delete_btn.background_color = (1,1,1)
-    
-            self.switch_buttons_state({'u': False, 'd': False})
+            
+            self.update_btn.text = "Update Account"
+            self.update_btn.color = "white"
+            self.update_btn.background_color = (1,1,1)
+            
+            self.switch_buttons_state({'u': False, 'd': False, 'h': False})
             self.switch_clear_button_state()
             return
 
@@ -279,6 +314,7 @@ class ManageAccountPage(Screen):
         update_state = kwargs.get('u', None)
         delete_state = kwargs.get('d', None)
         clear_state = kwargs.get('c', None)
+        home_state = kwargs.get('h', None)
 
         if update_state is not None:
             self.update_btn.disabled = update_state
@@ -286,6 +322,8 @@ class ManageAccountPage(Screen):
             self.delete_btn.disabled = delete_state
         if clear_state is not None:
             self.clear_btn.disabled = clear_state
+        if home_state is not None:
+            self.home_btn.disabled = home_state
         return
 
     def delete_account_details(self):
@@ -304,14 +342,14 @@ class ManageAccountPage(Screen):
             self.delete_btn.background_color = (255,255,255)
             self.delete_attempt = False
             self.switch_clear_button_state()
-            self.switch_buttons_state({'u': True})
+            self.switch_buttons_state({'u': True, 'h': True})
            
             return
 
         self.delete_btn.color = "white"
         self.delete_btn.text = "Delete Account"
         self.delete_btn.background_color = (1,1,1)
-        self.switch_buttons_state({'d': True, 'c': True, 'u': True})
+        self.switch_buttons_state({'d': True, 'c': True, 'u': True, 'h': True})
         self.delete_attempt = True
 
         url = "http://localhost:8000/api/account/" + str(trip_app.login_page.user_id) + '/'
@@ -323,11 +361,12 @@ class ManageAccountPage(Screen):
         return
 
     def show_action_msg(self, req, result):
+
         if req.resp_status != 200 and req.resp_status != 201:
                 
             self.action_msg.color = "red"
                 
-            self.switch_buttons_state({'u': False, 'd': False, 'c': False})
+            self.switch_buttons_state({'u': False, 'd': False, 'c': False, 'h': False})
                 
             if 'email' in result:
                 self.action_msg.text = result['email'][0]
@@ -338,10 +377,20 @@ class ManageAccountPage(Screen):
 
             if 'deleted_id' in result:
                 trip_app.login_page.action_msg.text = "Account Deleted!"
-                self.switch_buttons_state({'u': False, 'd': False, 'c': False})
-                self.delete_account_details()
-                trip_app.screen_manager.transition.direction = 'right'
-                trip_app.screen_manager.current = 'Login'
+               
+            if 'updated_id' in result:
+                trip_app.login_page.action_msg.text = "Account Updated!\nLog in using new credentials"
+                
+            self.switch_buttons_state({'u': False, 'd': False, 'c': False, 'h': False})
+            self.delete_account_details()
+            trip_app.screen_manager.transition.direction = 'right'
+            trip_app.screen_manager.current = 'Login'
+
+    def go_home(self):
+
+        trip_app.screen_manager.transition.direction = 'right'
+        trip_app.screen_manager.current = 'Main'
+
 
 class MainPage(Screen):
     def __init__(self, name, **kwargs):
@@ -395,7 +444,7 @@ class NewTripPage(Screen):
                        'Warsaw': 'WAW-sky',
                        'Edinburgh': 'EDI-sky',
                        'Glasgow': 'GLA-sky'}
-        self.querystring = {}
+        self.params = {}
         self.date_str = ''
         self.one_way = False # check box
         self.new_trip = {}

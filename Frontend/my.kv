@@ -96,6 +96,7 @@
     update_btn: update_btn
     delete_btn: delete_btn
     action_msg: action_msg
+    home_btn: home_btn
 
     TextInput:
         id: updated_email
@@ -111,26 +112,32 @@
     Label:
         id: action_msg
         text: "TEST TEST TEST"
-        size_hint: 1, .2
+        size_hint: 1, .15
         pos_hint: {"top": .76}
     Button:
         id: update_btn
         text: "Update Account"
         size_hint: 1, .15
-        pos_hint: {"top": .55}
+        pos_hint: {"top": .6}
         on_press: root.update_account()
-    Button:
-        id: clear_btn
-        text: "Clear"
-        size_hint: 1, .15
-        pos_hint: {"top": .38}
-        on_press: root.clear()
     Button:
         id: delete_btn
         text: "Delete Account"
         size_hint: 1, .15
-        pos_hint: {"top": .21}
+        pos_hint: {"top": .44}
         on_press: root.delete_account()
+    Button:
+        id: clear_btn
+        text: "Clear"
+        size_hint: 1, .15
+        pos_hint: {"top": .28}
+        on_press: root.clear()
+    Button:
+        id: home_btn
+        text: "Home"
+        size_hint: 1, .1
+        pos_hint: {"top": .12}
+        on_press: root.go_home()
 
 <NewTripPage>:
     out_day: out_day
