@@ -13,16 +13,17 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.popup import Popup
 #from kivy.properties import ObjectProperty
 import os
 import datetime
 import json
-from ApiWrapper import SkyApi
-from api_key import api_key
+#from ApiWrapper import SkyApi
+#from api_key import api_key
 from kivy.network.urlrequest import UrlRequest
-import urllib.parse
+#import urllib.parse
 
-kv = Builder.load_file('my.kv')
+Builder.load_file('my.kv')
 with open('db.json', 'r') as f:
     db = json.load(f)
 
@@ -40,7 +41,6 @@ class LoginPage(Screen):
         self.token = None
         self.register_attempt = True
         self.delete_attempt = True
-        #self.initial_login = False
         self.is_clear_cancel = False
 
         
@@ -52,12 +52,6 @@ class LoginPage(Screen):
                 self.user_id = d[2]
                 self.token = d[3]
         
-       
-        #self.busy_times = {'05:00', '05:01', '05:02', '05:03', '05:04', '05:05', '11:00', '11:01', '11:02', '11:03',
-         #                  '11:04', '11:05', '17:00', '17:01', '17:02', '17:03', '17:04', '17:05', '23:00', '23:01',
-        
-        
-      #                 '23:02', '23:03', '23:04', '23:05'}
 
     def save_credentials(self):
         with open('prev_details.txt', 'w') as f:
@@ -160,17 +154,11 @@ class LoginPage(Screen):
                 self.action_msg.text = "Account Created. Please log in"
                 self.clear()
                 self.switch_buttons_state({'l': False, 'r': False, 'c': False})
-               
-            
-        print("REQ: ", req.resp_status)
-        print("RESULT: ", result)
-        print("RESULT TYPE: ", type(result))
-       
 
     def open_app(self, req, result):
         self.user_id = result['id']
         self.token = result["token"]
-        # if remember me is ticked, save creds
+        # TO-DO: if remember me is ticked, save creds
         self.save_credentials()
         self.switch_buttons_state({'l': False, 'r': False, 'c': False})
         trip_app.manage_account_page.updated_email.text = self.email
@@ -257,7 +245,7 @@ class ManageAccountPage(Screen):
             self.update_btn.background_color = (255,255,255)
             self.update_attempt = False
             self.switch_clear_button_state()
-            self.switch_buttons_state({'d': True})
+            self.switch_buttons_state({'d': True, 'h': True})
            
             return
 
@@ -299,6 +287,7 @@ class ManageAccountPage(Screen):
         return
 
     def switch_clear_button_state(self):
+        # Changes clear button functionality to cancel button
         if self.is_clear_cancel:
             self.clear_btn.text = "Clear"
             self.clear_btn.color = "white"
@@ -311,6 +300,7 @@ class ManageAccountPage(Screen):
             self.is_clear_cancel = True
 
     def switch_buttons_state(self, kwargs):
+        # enable/disable selected buttons
         update_state = kwargs.get('u', None)
         delete_state = kwargs.get('d', None)
         clear_state = kwargs.get('c', None)
@@ -401,7 +391,7 @@ class MainPage(Screen):
 
     @staticmethod
     def new_trip():
-        trip_app.screen_manager.transition.direction = 'right'
+        trip_app.screen_manager.transition.direction = 'left'
         trip_app.screen_manager.current = 'New'
 
     @staticmethod
@@ -432,12 +422,13 @@ class MainPage(Screen):
         trip_app.screen_manager.current = "Account"
 
     def logout(self):
+        # TO-DO: logout on the backend as well
         trip_app.manage_account_page.delete_account_details()
         trip_app.screen_manager.transition.direction = 'right'
         trip_app.screen_manager.current = "Login"
 
 class NewTripPage(Screen):
-    def __init__(self, name,  **kwargs):
+    def __init__(self, name, **kwargs):
         super().__init__()
         self.name = name
         self.places = {'Krakow': 'KRK-sky',
@@ -448,6 +439,10 @@ class NewTripPage(Screen):
         self.date_str = ''
         self.one_way = False # check box
         self.new_trip = {}
+
+    def go_home(self):
+        trip_app.screen_manager.transition.direction = 'right'
+        trip_app.screen_manager.current = 'Main'
 
     # TO-DO: change this to backend query
     def search_trips(self):
@@ -462,7 +457,6 @@ class NewTripPage(Screen):
 
             self.date_str = self.out_year.text + '-' + self.out_month.text + '-' + self.out_day.text
             
-
             country = 'UK'
             currency = 'GBP'
             locale = 'en-UK'
@@ -590,7 +584,7 @@ class TripPage(Screen):
         self.rec_idx = db.index(next((rec for rec in db if rec['trip_id'] == self.trip_id), None))
 
         if not db[self.rec_idx]['one_way']:
-            self.trip_info = f"Trip ID: {db[self.rec_idx]['trip_id']} |   Start: {next(iter(db[self.rec_idx]['trip_data']['to']))}\n" \
+            self.trip_info = f"ID: {db[self.rec_idx]['trip_id']} |  Created: {next(iter(db[self.rec_idx]['trip_data']['to']))}\n" \
                 f"Out:  {db[self.rec_idx]['src_city']} to {db[self.rec_idx]['dst_city']}  {db[self.rec_idx]['to_date']}\n" \
                 f"In:  {db[self.rec_idx]['dst_city']} to {db[self.rec_idx]['src_city']}  {db[self.rec_idx]['back_date']}"
         else:
@@ -645,7 +639,7 @@ class TripPage(Screen):
 
             self.graph.add_plot(plot)
 
-        Clock.schedule_interval(lambda dt: self.update_plot(), 300)
+        #Clock.schedule_interval(lambda dt: self.update_plot(), 300)
 
     def show_info(self, **kwargs):
 
@@ -666,6 +660,8 @@ class TripPage(Screen):
             self.prices_in.text = 'No Inbound Info'
 
     def remove_trip(self):
+        print("Removed!!!!!!!!")
+        return
         global ids
         ids.remove(self.trip_id)
         trip_app.screen_manager.transition.direction = 'right'
@@ -675,32 +671,34 @@ class TripPage(Screen):
             trip_app.screen_manager.current = 'Main'
         trip_app.remove_screen(self.trip_id)
 
-        Clock.unschedule(self.update_plot)
+        #Clock.unschedule(self.update_plot)
 
     def go_home(self):
-        Clock.unschedule(self.update_plot)
+        #Clock.unschedule(self.update_plot)
         trip_app.screen_manager.transition.direction = 'right'
         trip_app.screen_manager.current = 'Main'
 
     def prev_trip(self):
         current_idx = ids.index(self.trip_id)
         if current_idx - 1 >= 0:
-            Clock.unschedule(self.update_plot)
+           # Clock.unschedule(self.update_plot)
             trip_app.screen_manager.transition.direction = 'right'
             trip_app.screen_manager.current = 'Trip' + str(ids[current_idx-1])
 
     def next_trip(self):
         current_idx = ids.index(self.trip_id)
         if current_idx + 1 < len(ids):
-            Clock.unschedule(self.update_plot)
+           # Clock.unschedule(self.update_plot)
             trip_app.screen_manager.transition.direction = 'left'
             trip_app.screen_manager.current = 'Trip' + str(ids[current_idx+1])
 
     def scroll_move(self, *args):
         if self.graph_scroll.scroll_x > 0:
-            print('Display x labels')
+            pass
+            #print('Display x labels')
         else:
-            print('Destroy x')
+            pass
+            #print('Destroy x')
 
 
 class TripPriceApp(App):
