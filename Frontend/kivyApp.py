@@ -210,25 +210,7 @@ class LoginPage(Screen):
             trip_app.trip_page.update_plot()
             #self.locals_update()
 
-    def send_request(self, req):
-        buff_size = 4096
-        now = str(datetime.datetime.now()).split(' ')[1][:5]
-        if now in self.busy_times:
-            # self.update_status('Server is busy. Database Update request rescheduled in 6min.')
-            return None
-        else:
-            # self.update_status('Updating database...')
-            soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            soc.connect((self.ip, int(self.port)))
-            soc.sendall(json.dumps(req).encode())
-            data = b''
-            while True:
-                part = soc.recv(buff_size)
-                data += part
-                if len(part) < buff_size:
-                    break
-            # self.update_status('Last updated: ' + now)
-            return json.loads(data.decode())
+
 
 class ManageAccountPage(Screen):
     def __init__(self, name, **kwargs):
@@ -376,11 +358,6 @@ class ManageAccountPage(Screen):
             trip_app.screen_manager.transition.direction = 'right'
             trip_app.screen_manager.current = 'Login'
 
-    def go_home(self):
-
-        trip_app.screen_manager.transition.direction = 'right'
-        trip_app.screen_manager.current = 'Main'
-
 
 class MainPage(Screen):
     def __init__(self, name, **kwargs):
@@ -437,18 +414,17 @@ class NewTripPage(Screen):
                        'Glasgow': 'GLA-sky'}
         self.params = {}
         self.date_str = ''
+        self.date_in_str = ''
         self.one_way = False # check box
         self.new_trip = {}
 
-    def go_home(self):
-        trip_app.screen_manager.transition.direction = 'right'
-        trip_app.screen_manager.current = 'Main'
 
-    # TO-DO: change this to backend query
     def search_trips(self):
 
         if self.out_day.text == "Day" or self.out_month.text == "Month" or self.out_year.text == "Year":
-            print('Select Outbound Dates')
+            self.search_msg.text = "You need to specify outbound date as minimum"
+        elif self.check_time_1.text == self.check_time_2 or self.check_time_1.text == self.check_time_3.text or self.check_time_2.text == self.check_time_3.text:
+            self.search_msg.text = "Times must differ"
         else:
             if self.in_year and self.in_month.text and self.in_day.text:
                 self.date_in_str = self.in_year.text + '-' + self.in_month.text + '-' + self.in_day.text
@@ -497,7 +473,7 @@ class NewTripPage(Screen):
             trip_app.remove_screen('In')
         except:
             pass
-        trips_in = TripsSearchResults(name='In', data=result, date_str=self.date_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
+        trips_in = TripsSearchResults(name='In', data=result, date_str=self.date_in_str, origin=self.origin_city.text, dest=self.dest_city.text, one_way=self.one_way)
         trips_in.display_trips()
         trip_app.add_screen(trips_in)
 
@@ -530,24 +506,31 @@ class TripsSearchResults(Screen):
         else:
             self.header.text = f"  Inbound\n{self.dest} to {self.origin}\nDate: {self.date_str}"
         print("DATA: ", self.data)
-        for i, quote in enumerate(self.data['Quotes']):
-            airline = next(x['Name'] for x in self.data['Carriers'] if x['CarrierId'] == quote['OutboundLeg']['CarrierIds'][0])
-            details = f"{i+1}  Quote ID: {quote['QuoteId']} Airline: {airline}\nPrice: {quote['MinPrice']} Direct: {quote['Direct']}"
-            lbl = Label(text=details, size_hint_y=None, height=40, size_hint_x=.8)
+        if 'Quotes' in self.data and len(self.data['Quotes']) > 0:
+            print("QOTES FOR LOOP TRIGGERED")
+            #TO-DO: IF QUOTES BUT NO DATA, THEN DISPLAY NO DATA
+            for i, quote in enumerate(self.data['Quotes']):
+                airline = next(x['Name'] for x in self.data['Carriers'] if x['CarrierId'] == quote['OutboundLeg']['CarrierIds'][0])
+                details = f"{i+1}  Airline: {airline}\nPrice: {quote['MinPrice']} Direct: {quote['Direct']}"
+                lbl = Label(text=details, size_hint_y=None, height=40, size_hint_x=.8)
+                layout.add_widget(lbl)
+                btn = Button(text='Select',on_press=self.select_trip, size_hint_y=None, height=40, size_hint_x=.2)
+                layout.add_widget(btn)
+                self.widgets[btn] = lbl
+                layout.add_widget(Label(text='--------------------------------------------------------', size_hint_y=None, height=40, size_hint_x=.8))
+                layout.add_widget(Label(size_hint_y=None, height=40, size_hint_x=.2))
+                self.all_trips[i+1] = {'quote_id': quote['QuoteId'],
+                                    'airline': airline,
+                                    'direct': quote['Direct'],
+                                    'date': self.date_str,
+                                    'origin': self.origin,
+                                    'dest': self.dest,
+                                    'price': quote['MinPrice']}
+            self.scroll_content.add_widget(layout)
+        else:
+            lbl = Label(text="No flights for selected date", size_hint_y=None, height=40, size_hint_x=.8)
             layout.add_widget(lbl)
-            btn = Button(text='Select',on_press=self.select_trip, size_hint_y=None, height=40, size_hint_x=.2)
-            layout.add_widget(btn)
-            self.widgets[btn] = lbl
-            layout.add_widget(Label(text='--------------------------------------------------------', size_hint_y=None, height=40, size_hint_x=.8))
-            layout.add_widget(Label(size_hint_y=None, height=40, size_hint_x=.2))
-            self.all_trips[i+1] = {'quote_id': quote['QuoteId'],
-                                   'airline': airline,
-                                   'direct': quote['Direct'],
-                                   'date': self.date_str,
-                                   'origin': self.origin,
-                                   'dest': self.dest,
-                                   'price': quote['MinPrice']}
-        self.scroll_content.add_widget(layout)
+            self.scroll_content.add_widget(layout)
 
     def select_trip(self, instance):
 
@@ -567,6 +550,7 @@ class TripsSearchResults(Screen):
             else:
                 if self.name == 'Out':
                     trip_app.new_trip_page.new_trip['out'] = self.all_trips[self.selected]
+                    trip_app.screen_manager.transition.direction = 'left'
                     trip_app.screen_manager.current = "In"
                 else:
                     trip_app.new_trip_page.new_trip['in'] = self.all_trips[self.selected]
@@ -673,10 +657,6 @@ class TripPage(Screen):
 
         #Clock.unschedule(self.update_plot)
 
-    def go_home(self):
-        #Clock.unschedule(self.update_plot)
-        trip_app.screen_manager.transition.direction = 'right'
-        trip_app.screen_manager.current = 'Main'
 
     def prev_trip(self):
         current_idx = ids.index(self.trip_id)

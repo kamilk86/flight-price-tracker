@@ -3,6 +3,7 @@
 <Button>:
     font_size: 12
     color: "white"
+  
 <Spinner>:
     font_size: 10
 <SpinnerOption>
@@ -50,19 +51,19 @@
             text: "Login"
             size_hint: 1, .15
             pos_hint: {"top": .5}
-            on_press: root.login()
+            on_release: root.login()
         Button:
             id: register_btn
             text: "Register"
             size_hint: 1, .15
             pos_hint: {"top": .34}
-            on_press: root.register()
+            on_release: root.register()
         Button:
             id: clear_btn
             text: "Clear"
             size_hint: 1, .15
             pos_hint: {"top": .18}
-            on_press: root.clear()
+            on_release: root.clear()
 
 <MainPage>:
     header: header
@@ -80,25 +81,25 @@
             text: "New Trip"
             size_hint: (1, .15)
             pos_hint: {"top": .7}
-            on_press: root.new_trip()
+            on_release: root.new_trip()
         Button:
             id: view_trips
             text: "View Trips"
             size_hint: (1, .15)
             pos_hint: {"top": .53}
-            on_press: root.view_trips()
+            on_release: root.view_trips()
         Button:
             id: manage_account_btn
             text: "Manage Account"
             size_hint: (1, .15)
             pos_hint: {"top": .36}
-            on_press: root.manage_account()
+            on_release: root.manage_account()
         Button:
             id: logout_btn
             text: "Logout"
             size_hint: (1, .15)
             pos_hint: {"top": .19}
-            on_press: root.logout()
+            on_release: root.logout()
 
 
 <ManageAccountPage>:
@@ -134,25 +135,25 @@
         text: "Update Account"
         size_hint: 1, .15
         pos_hint: {"top": .6}
-        on_press: root.update_account()
+        on_release: root.update_account()
     Button:
         id: delete_btn
         text: "Delete Account"
         size_hint: 1, .15
         pos_hint: {"top": .44}
-        on_press: root.delete_account()
+        on_release: root.delete_account()
     Button:
         id: clear_btn
         text: "Clear"
         size_hint: 1, .15
         pos_hint: {"top": .28}
-        on_press: root.clear()
+        on_release: root.clear()
     Button:
         id: home_btn
         text: "Home"
         size_hint: 1, .1
         pos_hint: {"top": .12}
-        on_press: root.go_home()
+        on_release:  app.root.transition.direction = 'right'; app.root.current = 'Main'
 
 <NewTripPage>:
     out_day: out_day
@@ -163,6 +164,10 @@
     in_year: in_year
     origin_city: origin_city
     dest_city: dest_city
+    search_msg: search_msg
+    check_time_1: check_time_1
+    check_time_2: check_time_2
+    check_time_3: check_time_3
     FloatLayout:
         Label:
             text: "Search Flights"
@@ -170,85 +175,115 @@
             size_hint: 1, .1
             pos_hint: {"top": 1}
         Label:
+            id: search_msg
+            text: ''
+            color: 'red'
+            size_hint: .1, .1
+            pos_hint: {"x": .45, "top": .9}
+        Label:
             text: "Outbound Date"
             size_hint: .1, .1
-            pos_hint: {"x": .45, "top": .85}
+            pos_hint: {"x": .45, "top": .8}
         Spinner:
             id: out_day
-            size_hint: .15, .06
-            pos_hint: {"x": .275, "top": .75}
+            size_hint: .25, .06
+            pos_hint: {"x": .125, "top": .7}
             text: "Day"
             values: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31']
             sync_height: "true"
         Spinner:
             id: out_month
-            size_hint: .15, .06
-            pos_hint: {"x": .425, "top": .75}
+            size_hint: .25, .06
+            pos_hint: {"x": .375, "top": .7}
             text: "Month"
             values: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
             sync_height: "true"
-
         Spinner:
             id: out_year
-            size_hint: .15, .06
-            pos_hint: {"x": .575, "top": .75}
+            size_hint: .25, .06
+            pos_hint: {"x": .625, "top": .7}
             text: "Year"
             values: ['2020', '2021']
             sync_height: "true"
         Label:
             text: "Inbound Date"
             size_hint: .1, .1
-            pos_hint: {"x": .45, "top": .7}
+            pos_hint: {"x": .45, "top": .64}
         Spinner:
             id: in_day
-            size_hint: .15, .06
-            pos_hint: {"x": .275, "top": .6}
+            size_hint: .25, .06
+            pos_hint: {"x": .125, "top": .54}
             text: "Day"
             values: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31']
             sync_height: "true"
         Spinner:
             id: in_month
-            size_hint: .15, .06
-            pos_hint: {"x": .425, "top": .6}
+            size_hint: .25, .06
+            pos_hint: {"x": .375, "top": .54}
             text: "Month"
             values: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
             sync_height: "true"
         Spinner:
             id: in_year
-            size_hint: .15, .06
-            pos_hint: {"x": .575, "top": .6}
+            size_hint: .25, .06
+            pos_hint: {"x": .625, "top": .54}
             text: "Year"
             values: ['2020', '2021']
             sync_height: "true"
         Label:
             text: "City"
             size_hint: .1, .1
-            pos_hint: {"x": .45, "top": .55}
+            pos_hint: {"x": .45, "top": .48}
         Spinner:
             id: origin_city
-            size_hint: .225, .06
-            pos_hint: {"x": .275, "top": .45}
+            size_hint: .4, .06
+            pos_hint: {"x": .1, "top": .38}
             text: "Origin"
             values: ['Edinburgh', 'Glasgow', 'Krakow', 'Warsaw']
             sync_height: "true"
         Spinner:
             id: dest_city
-            size_hint: .225, .06
-            pos_hint: {"x": .5, "top": .45}
+            size_hint: .4, .06
+            pos_hint: {"x": .5, "top": .38}
             text: "Destination"
             values: ['Krakow', 'Warsaw', 'Edinburgh', 'Glasgow']
+            sync_height: "true"
+        Label:
+            text: "Check price times"
+            size_hint: .1, .1
+            pos_hint: {"x": .45, "top": .32}
+        Spinner:
+            id: check_time_1
+            size_hint: .25, .06
+            pos_hint: {"x": .125, "top": .22}
+            text: "Time 1"
+            values: ['00','01', '02', '03', '04', '05', '06', '07', '08','09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
+            sync_height: "true"
+        Spinner:
+            id: check_time_2
+            size_hint: .25, .06
+            pos_hint: {"x": .375, "top": .22}
+            text: "Time 2"
+            values: ['00','01', '02', '03', '04', '05', '06', '07', '08','09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
+            sync_height: "true"
+        Spinner:
+            id: check_time_3
+            size_hint: .25, .06
+            pos_hint: {"x": .625, "top": .22}
+            text: "Time 3"
+            values: ['00','01', '02', '03', '04', '05', '06', '07', '08','09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
             sync_height: "true"
         Button:
             id: search
             text: "Search"
-            size_hint: .2, .1
-            pos_hint: {"x": .4, "top": .3}
-            on_press: root.search_trips()
+            size_hint: .4, .08
+            pos_hint: {"x": .1, "top": .12}
+            on_release: root.search_trips()
         Button:
             text: "Home"
-            size_hint: .2, .1
-            pos_hint: {"x": .4, "top": .15}
-            on_press: root.go_home()
+            size_hint: .4, .08
+            pos_hint: {"x": .5, "top": .12}
+            on_release:  app.root.transition.direction = 'right'; app.root.current = 'Main'
 
 <TripsSearchResults>:
     scroll_content: scroll_content
@@ -269,15 +304,14 @@
         Button:
             size_hint: .5, .1
             text: 'Home' if app.root.current == "Out" else 'Back'
-            on_press:
-                if app.root.current == "Out": app.root.current = 'Manage'
-                else: app.root.current = 'Out'
+            on_release:
+                if app.root.current == "Out": app.root.transition.direction = 'right'; app.root.current = 'Main'
+                else: app.root.transition.direction = 'right'; app.root.current = 'Out'
         Button:
             size_hint: .5, .1
             pos_hint: {"x": .5}
             text: "Continue"
-            on_press: root.cont()
-
+            on_release: root.cont()
 
 <TripPage>:
     header: header
@@ -349,20 +383,20 @@
                 text: "Prev"
                 size_hint: .5, .5
                 pos_hint: {"top": 1}
-                on_press: root.prev_trip()
+                on_release: root.prev_trip()
 
             Button:
                 id: next
                 text: "Next"
                 size_hint: .5, .5
                 pos_hint: {"x": .5, "top": 1}
-                on_press: root.next_trip()
+                on_release: root.next_trip()
 
             Button:
                 id: home
                 text: "Home"
                 size_hint: .5, .5
-                on_press: root.go_home()
+                on_release:  app.root.transition.direction = 'right'; app.root.current = 'Main'
             Button:
                 id: remove
                 text: "Remove"
