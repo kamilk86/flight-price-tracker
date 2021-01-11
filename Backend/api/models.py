@@ -16,7 +16,8 @@ class CustomUser(AbstractUser):
 class Trip(models.Model):
     owner = models.ForeignKey(get_user_model(),related_name='flight', on_delete=models.CASCADE) # ,
     created = models.DateTimeField(auto_now_add=True)
-    airline = models.CharField(max_length=100)
+    outbound_airline = models.CharField(max_length=100)
+    inbound_airline = models.CharField(max_length=100, null=True, blank=True)
     one_way = models.BooleanField(default=False)
     outbound_date = models.DateField()
     inbound_date = models.DateField(null=True, blank=True)
